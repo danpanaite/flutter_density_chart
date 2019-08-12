@@ -17,16 +17,16 @@ class _DensityChartState extends State<DensityChart> {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: RadarChartPainter(widget.points),
+      painter: DensityChartPainter(widget.points),
       size: Size(double.infinity, double.infinity),
     );
   }
 }
 
-class RadarChartPainter extends CustomPainter {
+class DensityChartPainter extends CustomPainter {
   final List<Point> points;
 
-  RadarChartPainter(this.points);
+  DensityChartPainter(this.points);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -45,6 +45,7 @@ class RadarChartPainter extends CustomPainter {
         RRect.fromLTRBR(0, 0, size.width, size.height, Radius.zero),
         outlinePaint);
 
+    // Painting each point
     var xPoints = this.points.map((point) => point.x).toList()..sort();
     var xScale = size.width / (xPoints.last - xPoints.first);
 
@@ -57,6 +58,8 @@ class RadarChartPainter extends CustomPainter {
 
       canvas.drawCircle(offset, 8.0, scatterPlotPaint);
     });
+
+    // Creating bin division
   }
 
   @override
