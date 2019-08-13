@@ -45,8 +45,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 future: getSampleData(),
                 builder: (context, snapshot) {
                   return Padding(
-                    padding: const EdgeInsets.all(50.0),
-                    child: DensityChart(points: snapshot.data),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 200),
+                    child: HistogramDensityChart(points: snapshot.data),
                   );
                 },
               ),
