@@ -40,17 +40,25 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Container(
         child: Column(
           children: <Widget>[
+            // Expanded(
+            //   child: FutureBuilder<List<Point>>(
+            //     future: getSampleData(),
+            //     builder: (context, snapshot) {
+            //       return Padding(
+            //         padding: const EdgeInsets.symmetric(
+            //             horizontal: 50, vertical: 200),
+            //         child: HistogramDensityChart(points: snapshot.data),
+            //       );
+            //     },
+            //   ),
+            // ),
             Expanded(
-              child: FutureBuilder<List<Point>>(
-                future: getSampleData(),
-                builder: (context, snapshot) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 200),
-                    child: HistogramDensityChart(points: snapshot.data),
-                  );
-                },
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 50, vertical: 200),
+                child: HistogramDensityChart(points: getRandomData(1000)),
               ),
-            ),
+            )
           ],
         ),
       ),
@@ -65,5 +73,13 @@ class _MyHomePageState extends State<MyHomePage> {
         .map((pointJson) =>
             Point(pointJson['x'] as double, pointJson['y'] as double))
         .toList();
+  }
+
+  List<Point> getRandomData(int numberOfPoints) {
+    var randomGenerator = Random();
+
+    return List<int>.generate(numberOfPoints, (i) => i).map((index) {
+      return Point(randomGenerator.nextDouble(), randomGenerator.nextDouble());
+    }).toList();
   }
 }
