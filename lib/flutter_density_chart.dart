@@ -84,7 +84,7 @@ class HistogramDensityPainter extends DensityPlotPainter {
   void paint(Canvas canvas, Size size) {
     var histogramBinPaint = Paint()..style = PaintingStyle.fill;
 
-    var divisions = 10;
+    var divisions = 20;
     var binWidth = size.width / divisions;
     var binHeight = size.height / divisions;
 
