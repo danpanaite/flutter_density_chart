@@ -3,7 +3,11 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from scipy import stats
+import pandas as pd
 
+shots = pd.read_csv('example/python/shots_2018.csv')
+
+print(shots.head(5))
 
 # delta = 0.025
 # x = np.arange(-3.0, 3.0, delta)
@@ -20,24 +24,38 @@ from scipy import stats
 
 # plt.show()
 
-def get_gaussian_data(n):
-    m1 = np.random.normal(scale=0.75, size=n)
-    m2 = np.random.normal(size=n)
+def get_team_shots(team_code):
+    if team_code is not None:
+        team_shots = shots[(shots.awayTeamCode == team_code) & (shots.isHomeTeam == 0) | (
+            shots.homeTeamCode == team_code) & (shots.isHomeTeam == 1)][['arenaAdjustedXCord', 'arenaAdjustedYCord']]
+    else:
+        team_shots = shots[['arenaAdjustedXCord', 'arenaAdjustedYCord']]
 
-    return m1+m2, m1-m2
+    team_shots.columns = ['x', 'y']
+    team_shots[team_shots['x'] < 0] = team_shots[team_shots['x'] < 0] * -1
+
+    return team_shots
 
 
-m1, m2 = get_gaussian_data(4000)
-xmin = m1.min()
-xmax = m1.max()
-ymin = m2.min()
-ymax = m2.max()
+def get_kde_data(m1, m2, divisions):
+    X, Y = np.mgrid[x_range[0]: x_range[1]: complex(0, divisions),
+                    y_range[0]: y_range[1]: complex(0, divisions)]
 
-X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
-positions = np.vstack([X.ravel(), Y.ravel()])
-values = np.vstack([m1, m2])
-kernel = stats.gaussian_kde(values)
-Z = np.reshape(kernel(positions).T, X.shape)
+    positions = np.vstack([X.ravel(), Y.ravel()])
+    values = np.vstack([m1, m2])
+    kernel = stats.gaussian_kde(values)
+    Z = kernel(positions)
+
+    return [X, Y, Z]
+
+shots = pd.read_csv('example/python/shots_2018.csv')
+x_range = [0, 100]
+y_range = [-51, 50]
+
+team_shots = get_team_shots('CGY')
+team_shots = team_shots.to_numpy()
+X, Y, Z = get_kde_data(team_shots[:, 0], team_shots[:, 1], 40)
+Z = np.reshape(Z.T, X.shape)
 
 
 fig, ax = plt.subplots()

@@ -58,6 +58,20 @@ class BlankChart extends StatelessWidget {
   }
 }
 
+class IceRinkChart extends StatelessWidget {
+  final List<Vector2> points;
+
+  const IceRinkChart({Key key, this.points}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: ScatterPlotPainter(this.points),
+      size: Size(double.infinity, double.infinity),
+    );
+  }
+}
+
 class DensityOutlineChartPainter extends CustomPainter {
   final List<Vector2> points;
 
@@ -72,12 +86,12 @@ class DensityOutlineChartPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     var xPoints = this.points.map((point) => point.x).toList()..sort();
-    var xScale = size.width / (xPoints.last - xPoints.first);
-    var xTicks = List.generate((xPoints.last - xPoints.first).floor(),
+    var xScale = size.width / (50);
+    var xTicks = List.generate((50).floor(),
         (i) => Offset((i + 1) * xScale, size.height));
 
     xTicks.asMap().forEach((index, tick) {
-      var tickLabel = (xPoints.first + index).floor().toString();
+      var tickLabel = (index).floor().toString();
 
       canvas.drawLine(tick, Offset(tick.dx, size.height + 10), outlinePaint);
       paintTickLabel(tickLabel, canvas,
@@ -85,12 +99,12 @@ class DensityOutlineChartPainter extends CustomPainter {
     });
 
     var yPoints = this.points.map((point) => point.y).toList()..sort();
-    var yScale = size.height / (yPoints.last - yPoints.first);
-    var yTicks = List.generate((yPoints.last - yPoints.first).floor(),
+    var yScale = size.height / (100);
+    var yTicks = List.generate((100).floor(),
         (i) => Offset(0, (i + 1) * yScale));
 
     yTicks.asMap().forEach((index, tick) {
-      var tickLabel = (yPoints.last - index).floor().toString();
+      var tickLabel = (-index).floor().toString();
 
       canvas.drawLine(tick, Offset(-10, tick.dy), outlinePaint);
       paintTickLabel(
@@ -147,7 +161,7 @@ class HistogramDensityPainter extends DensityPlotPainter {
   void paint(Canvas canvas, Size size) {
     var histogramBinPaint = Paint()..style = PaintingStyle.fill;
 
-    var divisions = 10;
+    var divisions = 70;
     var binWidth = size.width / divisions;
     var binHeight = size.height / divisions;
 
@@ -174,7 +188,8 @@ class HistogramDensityPainter extends DensityPlotPainter {
         var bottom = binHeight * (colIndex + 1);
 
         var color =
-            Color.lerp(Colors.white, Colors.green, col / maxBinCount * 2);
+            Color.lerp(Colors.white, Colors.green, col / maxBinCount * 2)
+                .withAlpha(200);
 
         canvas.drawRRect(RRect.fromLTRBR(left, top, right, bottom, Radius.zero),
             histogramBinPaint..color = color);
@@ -425,15 +440,15 @@ abstract class DensityPlotPainter extends CustomPainter {
 
   List<Offset> getOffsetsForCanvas(Size size) {
     var xPoints = this.points.map((point) => point.x).toList()..sort();
-    var xScale = size.width / (xPoints.last - xPoints.first);
+    var xScale = size.width / 100;
 
     var yPoints = this.points.map((point) => point.y).toList()..sort();
-    var yScale = size.height / (yPoints.last - yPoints.first);
+    var yScale = size.height / 100;
 
     return this
         .points
-        .map((point) => Offset((point.x - xPoints.first) * xScale,
-            (point.y - yPoints.first) * yScale))
+        .map((point) => Offset((point.x + 50) * xScale,
+            (point.y) * yScale))
         .toList();
   }
 

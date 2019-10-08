@@ -1,96 +1,99 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import numpy as np
 from scipy import stats
+
 import matplotlib.pyplot as plt
+import pandas as pd
+
+shots = pd.read_csv('example/python/shots_2018.csv')
+x_range = [0, 100]
+y_range = [-51, 50]
 
 app = Flask(__name__)
 
+@app.route('/shots')
+def get_shots():
+    team_code = request.args.get('team')
+    team_shots = get_team_shots(team_code)
 
-def get_gaussian_data(n):
-    m1 = np.random.normal(scale=0.75, size=n)
-    m2 = np.random.normal(size=n)
-
-    return m1+m2, m1-m2
+    return team_shots.to_json(orient='records')
 
 
-@app.route('/')
-def get_data():
+@app.route('/shots/kde')
+def get_shots_kde():
+    team_code = request.args.get('team')
+    divisions = int(request.args.get('divisions') or 10)
+    team_shots = get_team_shots(team_code)
+
+    team_shots = team_shots.to_numpy()
+    X, Y, Z = get_kde_data(team_shots[:, 0], team_shots[:, 1], divisions)
+    positions = np.vstack([X.ravel(), Y.ravel()])
     points = []
 
-    for i in range(len(m1)):
+    for i in range(len(positions[0, :])):
         points.append({
-            'x': m1[i],
-            'y': m2[i]
+            'x': float(positions[0, i]),
+            'y': float(positions[1, i]),
+            'z': Z[i]
         })
 
     return jsonify(points)
 
 
-@app.route('/kde')
-def get_kde_data():
-    xmin = m1.min()
-    xmax = m1.max()
-    ymin = m2.min()
-    ymax = m2.max()
-
-    X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
-    positions = np.vstack([X.ravel(), Y.ravel()])
-    values = np.vstack([m1, m2])
-    kernel = stats.gaussian_kde(values)
-    Z = np.reshape(kernel(positions).T, X.shape)
-
-    points = []
-
-    for i in range(len(X[0])):
-        for j in range(len(Y[0])):
-            points.append({
-                'x': X[i, 0],
-                'y': Y[0, j],
-                'z': Z[i, j]
-            })
-
-    return jsonify(points)
-
-
-@app.route('/kde/contour')
+@app.route('/shots/kde/contour')
 def get_contour_data():
-    X, Y, Z = get_kde()
+    team_code = request.args.get('team')
+    divisions = int(request.args.get('divisions') or 10)
+    team_shots = get_team_shots(team_code)
+    team_shots = team_shots.to_numpy()
+    X, Y, Z = get_kde_data(team_shots[:, 0], team_shots[:, 1], divisions)
+    Z = np.reshape(Z.T, X.shape)
 
     fig, ax = plt.subplots()
-    contour_paths = ax.contour(X, Y, Z).allsegs
+    contour_levels = ax.contour(X, Y, Z).allsegs
     contour_paths_json = []
 
-    for contour_path in contour_paths:
-        if len(contour_path) == 0:
+    for contour_level in contour_levels:
+        if len(contour_level) == 0:
             continue
 
-        contour_path_json = []
+        for contour_path in contour_level:
+            contour_path_json = []
 
-        for point in contour_path[0]:
-            contour_path_json.append({
-                'x': point[0],
-                'y': point[1]
-            })
+            for point in contour_path:
+                contour_path_json.append({
+                    'x': point[0],
+                    'y': point[1]
+                })
 
-        contour_paths_json.append(contour_path_json)
+            contour_paths_json.append(contour_path_json)
 
     return jsonify(contour_paths_json)
 
 
-def get_kde():
-    xmin = m1.min()
-    xmax = m1.max()
-    ymin = m2.min()
-    ymax = m2.max()
+def get_team_shots(team_code):
+    if team_code is not None:
+        team_shots = shots[(shots.awayTeamCode == team_code) & (shots.isHomeTeam == 0) | (
+            shots.homeTeamCode == team_code) & (shots.isHomeTeam == 1)][['arenaAdjustedXCord', 'arenaAdjustedYCord']]
+    else:
+        team_shots = shots[['arenaAdjustedXCord', 'arenaAdjustedYCord']]
 
-    X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+    team_shots.columns = ['x', 'y']
+    team_shots[team_shots['x'] < 0] = team_shots[team_shots['x'] < 0] * -1
+
+    return team_shots
+
+
+def get_kde_data(m1, m2, divisions):
+    X, Y = np.mgrid[x_range[0]: x_range[1]: complex(0, divisions),
+                    y_range[0]: y_range[1]: complex(0, divisions)]
+
     positions = np.vstack([X.ravel(), Y.ravel()])
     values = np.vstack([m1, m2])
     kernel = stats.gaussian_kde(values)
-    Z = np.reshape(kernel(positions).T, X.shape)
+    Z = kernel(positions)
 
-    return X, Y, Z
+    return [X, Y, Z]
 
 
-m1, m2 = get_gaussian_data(4000)
 app.run()
