@@ -11,6 +11,7 @@ y_range = [-51, 50]
 
 app = Flask(__name__)
 
+
 @app.route('/shots')
 def get_shots():
     team_code = request.args.get('team')

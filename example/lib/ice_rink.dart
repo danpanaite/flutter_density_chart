@@ -3,12 +3,19 @@ library flutter_density_chart;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_density_chart/flutter_density_chart_me.dart';
+import 'package:flutter_density_chart/flutter_density_chart.dart';
 import 'package:vector_math/vector_math.dart' show Vector2, Vector3;
 
 final int rinkWidth = 100;
 final int rinkHeight = 85;
 final int rinkCornerRadius = 24;
+
+final List<Color> colors = [
+  Color(0xFF225ea8),
+  Color(0xFF41b6c4),
+  Color(0xFFa1dab4),
+  Color(0xFFffffcc),
+];
 
 class IceRinkChart extends StatelessWidget {
   final List<Vector2> points;
@@ -26,6 +33,8 @@ class IceRinkChart extends StatelessWidget {
           child: CustomPaint(
             painter: HistogramDensityPainter(
               points,
+              divisions: 100,
+              colors: colors,
               defaultXRange: Range(0, 100),
               defaultYRange: Range(-51, 50),
             ),
@@ -44,18 +53,6 @@ class IceRinkDensityChart extends StatelessWidget {
   const IceRinkDensityChart({Key key, this.points, this.contours})
       : super(key: key);
 
-  static const List<Color> colors = [
-    Color(0xFF225ea8),
-    Color(0xFF41b6c4),
-    Color(0xFFa1dab4),
-    Color(0xFFffffcc),
-  ];
-
-  // static List<Color> colors = [
-  //   Colors.white,
-  //   Colors.green,
-  // ];
-
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
@@ -65,17 +62,20 @@ class IceRinkDensityChart extends StatelessWidget {
           painter: IceRinkOutlineChartPainter(),
           size: Size(double.infinity, double.infinity),
           child: CustomPaint(
-              painter: KernelDensityEstimationPainter(
-                points,
-                colors: colors,
-                clipRRect: clipRRect,
-              ),
-              size: Size(double.infinity, double.infinity),
-              child: ContourChart(
-                contours,
-                defaultXRange: Range(0, 100),
-                defaultYRange: Range(-51, 50),
-              )),
+            painter: KernelDensityEstimationPainter(
+              points,
+              colors: colors,
+              clipRRect: clipRRect,
+            ),
+            size: Size(double.infinity, double.infinity),
+            child: contours != null
+                ? ContourChart(
+                    contours,
+                    defaultXRange: Range(0, 100),
+                    defaultYRange: Range(-51, 50),
+                  )
+                : Container(),
+          ),
         ),
       ),
     );
